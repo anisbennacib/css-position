@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TP 01 — La propriété CSS position (support interactif)</title>
+<style>
+:root{--vert:#E2EFD9;--vert-bord:#b7d3a5;--vert-f:#1b5e20;--encre:#111;--code-bg:#15201a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#cdd6c9}
+body{font-family:Aptos,sans-serif;color:var(--encre)}
+button{font-family:Aptos,sans-serif}
+#app{display:flex;height:100%;width:100%}
+#area{flex:1 1 auto;position:relative;min-width:0;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;background:#fff;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.3)}
+
+/* bandeaux */
+.band{flex:none;height:48px;background:var(--vert);display:flex;align-items:center;padding:0 28px;font-size:21px;color:#14301a}
+.band.top{border-bottom:2px solid var(--vert-bord);font-weight:700}
+.band.bottom{border-top:2px solid var(--vert-bord);display:grid;grid-template-columns:1fr auto 1fr;font-weight:600}
+.band .nav{display:flex;align-items:center;gap:12px}
+.band .nav button{font-size:18px;font-weight:700;padding:3px 16px;border:2px solid var(--vert-f);background:#fff;color:var(--vert-f);border-radius:8px;cursor:pointer}
+.band .nav button:hover:not(:disabled){background:var(--vert-f);color:#fff}
+.band .nav button:disabled{opacity:.35;cursor:default}
+#num{min-width:120px;text-align:center;font-size:22px;font-weight:700}
+.hint{justify-self:end;font-size:16px;font-weight:500;opacity:.85}
+
+/* écrans */
+#screens{flex:1 1 auto;position:relative;min-height:0}
+.screen{position:absolute;left:0;top:0;right:0;bottom:0;padding:12px 36px 0;display:none}
+.screen.on{display:block}
+.head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:8px;min-height:46px}
+h2{margin:0;font-size:31px;line-height:1.15;display:flex;align-items:center;gap:14px}
+h2 .n{flex:none;width:44px;height:44px;border-radius:50%;background:var(--vert-f);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center}
+code{font-family:Consolas,'Cascadia Mono','DejaVu Sans Mono',monospace;background:var(--vert);padding:0 6px;border-radius:5px;font-size:.92em}
+h2 code{font-size:.9em}
+.cols{display:grid;grid-template-columns:620px 1fr;gap:28px;align-items:start}
+.cols.wide{grid-template-columns:760px 1fr}
+.cap{font-size:18px;font-weight:700;color:#33523a;margin:0 0 4px}
+.capflex{display:flex;justify-content:space-between;align-items:center;min-height:38px;margin:0 0 4px}
+#x4{display:flex;gap:8px}
+.fhost iframe.demo{width:620px;height:380px;border:3px solid #263238;border-radius:8px;background:#fff;display:block}
+.fhost.wide iframe.demo{width:760px;height:470px}
+.fhost.low iframe.demo{height:380px}
+
+/* boutons */
+.btn{font-size:20px;font-weight:700;padding:7px 16px;border:2px solid var(--vert-f);background:#fff;color:var(--vert-f);border-radius:8px;cursor:pointer;line-height:1.2}
+.btn:hover{background:var(--vert)}
+.btn.on{background:var(--vert-f);color:#fff}
+.btn.on:hover{background:#2e7d32}
+.btn.sm{font-size:19px;padding:3px 11px}
+.btn:focus-visible,.band .nav button:focus-visible{outline:4px solid #f9a825;outline-offset:2px}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.tabs{display:flex;gap:10px}
+.tab{display:none}
+.tab.on{display:block}
+
+/* code */
+.code{background:var(--code-bg);color:#f5f5f5;border-radius:10px;padding:14px 18px;font:20px/1.45 Consolas,'Cascadia Mono','DejaVu Sans Mono',monospace;white-space:pre;overflow:hidden}
+.code.s17{font-size:17px;padding:12px 14px}
+.ln{display:block;margin:0 -8px;padding:0 8px;border-radius:5px}
+.ln.gap{height:10px;line-height:10px}
+.ln.new{background:rgba(255,213,79,.30)}
+.ln.err{background:rgba(239,83,80,.40)}
+.sel{color:#a5e075}.prop{color:#8fd3ff}.val{color:#ffd580}.com{color:#cfd8dc;font-style:italic}
+
+/* texte */
+.points{margin:14px 0 0;padding:0;list-style:none;font-size:23px;line-height:1.35}
+.points li{position:relative;padding-left:26px;margin-bottom:9px}
+.points li:before{content:'';position:absolute;left:3px;top:.52em;width:11px;height:11px;background:#2e7d32;border-radius:3px}
+.points.s20{font-size:20px;margin-top:10px}
+.tp{margin-top:10px;font-size:21px;padding:8px 14px;background:var(--vert);border-left:6px solid var(--vert-f);border-radius:6px;line-height:1.3}
+.read{margin-top:8px;font-size:19px;line-height:1.4;color:#1c2b1f;min-height:54px}
+.read b{color:#0d47a1}
+.read .bad{color:#b71c1c;font-weight:700}
+.read .ok{color:#1b5e20;font-weight:700}
+.rightread{margin-top:10px;font-size:19px;line-height:1.4;min-height:60px}
+.rightread b{color:#0d47a1}
+.rightread .bad{color:#b71c1c;font-weight:700}
+.rightread .ok{color:#1b5e20;font-weight:700}
+.legend{font-size:18px;margin-top:8px}
+.sw{display:inline-block;width:16px;height:16px;border-radius:3px;vertical-align:-2px;margin-right:6px}
+
+/* bac à sable */
+.sbrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.offgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin-bottom:10px}
+.off{display:flex;align-items:center;gap:4px;background:#f3f7f1;border:2px solid var(--vert-bord);border-radius:8px;padding:3px 6px;font-size:18px}
+.off .lb{font-family:Consolas,'Cascadia Mono','DejaVu Sans Mono',monospace;font-weight:700;width:66px}
+.off .v{font-family:Consolas,'Cascadia Mono','DejaVu Sans Mono',monospace;min-width:52px;text-align:right;font-weight:700;color:#0d47a1}
+.off .btn.sm{font-size:18px;padding:2px 9px}
+#k5{min-height:282px}
+
+/* tableau */
+table.cmp{border-collapse:collapse;width:100%;font-size:23px;line-height:1.3}
+table.cmp th,table.cmp td{border:2px solid #9fbf8d;padding:10px 13px;text-align:left;vertical-align:top}
+table.cmp thead th{background:var(--vert-f);color:#fff;font-size:25px}
+table.cmp thead th code{background:transparent;color:#fff;font-size:1em}
+table.cmp tbody th{background:var(--vert);width:250px}
+table.cmp td.y{color:#b71c1c;font-weight:700}
+table.cmp td.n{color:#1b5e20;font-weight:700}
+.sticky{margin-top:16px;font-size:22px;padding:8px 14px;border:2px dashed #9fbf8d;border-radius:8px}
+
+/* questions */
+.qa{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.qc{border:3px solid var(--vert-bord);border-radius:12px;padding:14px 18px;background:#fbfdf9;cursor:pointer;min-height:236px;text-align:left;font-size:inherit;font-family:inherit;color:inherit;display:block;width:100%}
+.qc:hover{border-color:var(--vert-f)}
+.qc:focus-visible{outline:4px solid #f9a825;outline-offset:2px}
+.qc .qt{font-size:23px;font-weight:700;line-height:1.3;margin-bottom:10px}
+.qc .qn{display:inline-flex;width:34px;height:34px;border-radius:50%;background:var(--vert-f);color:#fff;align-items:center;justify-content:center;margin-right:10px;font-size:21px;vertical-align:1px}
+.qc .ans{font-size:22px;line-height:1.35;padding:8px 12px;background:var(--vert);border-radius:8px;visibility:hidden}
+.qc.open .ans{visibility:visible}
+.qc .hintq{font-size:17px;color:#555;margin-top:8px}
+
+/* notes enseignant */
+#notes{flex:none;width:0;overflow:hidden;background:#fffbe6;border-left:0 solid #e0b100}
+#notes.on{width:410px;border-left-width:5px}
+#notes .in{width:405px;height:100%;overflow:auto;padding:16px 18px 24px;font-size:17px;line-height:1.4}
+#notes h3{margin:0 0 8px;font-size:21px}
+#notes h4{margin:14px 0 4px;font-size:17px;text-transform:uppercase;letter-spacing:.04em;color:#7a5a00}
+#notes ul,#notes ol{margin:0;padding-left:22px}
+#notes li{margin-bottom:5px}
+#notes .tag{display:inline-block;background:#e0b100;color:#111;font-weight:700;font-size:14px;padding:1px 8px;border-radius:4px;margin-bottom:6px}
+</style>
+</head>
+<body>
+<noscript>Ce support utilise JavaScript pour ses démonstrations.</noscript>
+<div id="app">
+ <div id="area">
+  <div id="stage">
+   <div class="band top"><span>STI 2026-2027 / TP 01 — Positionnement</span></div>
+   <div id="screens">
+
+    <!-- ===== Écran 1 ===== -->
+    <section class="screen" id="s1">
+     <div class="head"><h2><span class="n">1</span><span>Le flux normal : <code>position: static</code></span></h2></div>
+     <div class="cols">
+      <div>
+       <div class="cap">Page de démonstration</div>
+       <div class="fhost" id="h1"></div>
+       <div class="ctrl" id="c1"></div>
+       <div class="read" id="r1"></div>
+      </div>
+      <div>
+       <div class="code" id="k1"></div>
+       <ul class="points">
+        <li>Valeur par défaut de tous les éléments.</li>
+        <li>Les blocs s'empilent de haut en bas, dans l'ordre du code HTML.</li>
+        <li><code>top</code>, <code>right</code>, <code>bottom</code>, <code>left</code> n'ont <strong>aucun effet</strong> sur un élément <code>static</code>.</li>
+       </ul>
+      </div>
+     </div>
+    </section>
+
+    <!-- ===== Écran 2 ===== -->
+    <section class="screen" id="s2">
+     <div class="head"><h2><span class="n">2</span><span><code>relative</code> : décalé, mais il garde sa place</span></h2></div>
+     <div class="cols">
+      <div>
+       <div class="cap">Page de démonstration</div>
+       <div class="fhost" id="h2"></div>
+       <div class="ctrl" id="c2"></div>
+       <div class="read" id="r2"></div>
+      </div>
+      <div>
+       <div class="code" id="k2"></div>
+       <ul class="points">
+        <li>Le décalage se mesure depuis la <strong>place d'origine</strong>.</li>
+        <li>L'espace d'origine reste réservé (pointillés) : les autres éléments ne bougent pas.</li>
+        <li><code>relative</code> seul ne déplace rien : il faut <code>top</code> / <code>left</code>…</li>
+       </ul>
+       <div class="tp">Dans le TP 01 : le cadre <code>#carousel-container</code>.</div>
+      </div>
+     </div>
+    </section>
+
+    <!-- ===== Écran 3 ===== -->
+    <section class="screen" id="s3">
+     <div class="head"><h2><span class="n">3</span><span><code>absolute</code> : hors du flux, placé par rapport à un repère</span></h2></div>
+     <div class="cols">
+      <div>
+       <div class="cap">Page de démonstration</div>
+       <div class="fhost" id="h3"></div>
+       <div class="ctrl" id="c3"></div>
+       <div class="read" id="r3"></div>
+      </div>
+      <div>
+       <div class="code" id="k3"></div>
+       <ul class="points s20">
+        <li>Il <strong>sort du flux</strong> : les éléments suivants remontent.</li>
+        <li>Repère : l'<strong>ancêtre positionné</strong> le plus proche (position autre que <code>static</code>), sinon la <strong>page</strong>.</li>
+       </ul>
+       <div class="tp">Dans le TP 01 : la légende, « Précédent » et « Suivant ».</div>
+      </div>
+     </div>
+    </section>
+
+    <!-- ===== Écran 4 ===== -->
+    <section class="screen" id="s4">
+     <div class="head"><h2><span class="n">4</span><span><code>fixed</code> : placé par rapport à la fenêtre</span></h2></div>
+     <div class="cols">
+      <div>
+       <div class="cap capflex"><span>Fenêtre du navigateur (la page défile)</span><span id="x4"></span></div>
+       <div class="fhost" id="h4"></div>
+       <div class="ctrl" id="c4"></div>
+       <div class="read" id="r4"></div>
+      </div>
+      <div>
+       <div class="code" id="k4"></div>
+       <ul class="points s20">
+        <li>Repère : la <strong>fenêtre</strong> du navigateur.</li>
+        <li>Il reste en place quand on fait défiler la page.</li>
+        <li>Il sort du flux, comme <code>absolute</code> : il ne prend plus de place.</li>
+       </ul>
+       <div class="tp">Dans le TP 01 : le pied de page.</div>
+      </div>
+     </div>
+    </section>
+
+    <!-- ===== Écran 5 ===== -->
+    <section class="screen" id="s5">
+     <div class="head"><h2><span class="n">5</span><span><code>top</code>, <code>right</code>, <code>bottom</code>, <code>left</code> : le bac à sable</span></h2></div>
+     <div class="cols">
+      <div>
+       <div class="cap">Page de démonstration (faites-la défiler)</div>
+       <div class="fhost" id="h5"></div>
+       <div class="ctrl" id="c5"></div>
+       <div class="read" id="r5"></div>
+      </div>
+      <div>
+       <div class="sbrow" id="sb-pos"></div>
+       <div class="offgrid" id="sb-off"></div>
+       <div class="sbrow" id="sb-misc"></div>
+       <div class="code s17" id="k5"></div>
+      </div>
+     </div>
+    </section>
+
+    <!-- ===== Écran 6 ===== -->
+    <section class="screen" id="s6">
+     <div class="head"><h2><span class="n">6</span><span>Dans le TP 01 : Balade dans la nature</span></h2>
+      <div class="tabs" id="t6"><button class="btn on" id="t6-0">① Le cadre</button><button class="btn" id="t6-1">② Le pied de page</button></div></div>
+     <div class="tab on" id="s6t0">
+      <div class="cols wide">
+       <div>
+        <div class="fhost wide" id="h6a"></div>
+        <div class="ctrl" style="margin-top:8px;align-items:center"><button class="btn sm" id="hl-toggle">Repères : non</button>
+         <span class="legend" style="margin:0"><span class="sw" style="background:#2e7d32"></span>repère (relative) <span class="sw" style="background:#e65100;margin-left:10px"></span>absolute</span></div>
+       </div>
+       <div>
+        <div class="code s17" id="k6a"></div>
+        <div class="rightread" id="r6a"></div>
+       </div>
+      </div>
+     </div>
+     <div class="tab" id="s6t1">
+      <div class="cols wide">
+       <div class="fhost wide" id="h6b"></div>
+       <div>
+        <div class="code s17" id="k6b"></div>
+        <div class="ctrl" id="c6b"></div>
+        <div class="rightread" id="r6b"></div>
+        <ul class="points s20">
+         <li>Le <code>padding</code> du <code>body</code> (50px en bas) réserve l'espace pour la dernière ligne.</li>
+        </ul>
+       </div>
+      </div>
+     </div>
+    </section>
+
+    <!-- ===== Écran 7 ===== -->
+    <section class="screen" id="s7">
+     <div class="head"><h2><span class="n">7</span><span>Erreurs fréquentes</span></h2>
+      <div class="tabs" id="t7"><button class="btn on" id="t7-0">① Parent sans relative</button><button class="btn" id="t7-1">② Pied de page qui recouvre</button><button class="btn" id="t7-2">③ top sur un static</button></div></div>
+     <div class="tab on" id="s7t0">
+      <div class="cols wide"><div class="fhost wide" id="h7a"></div>
+       <div><div class="ctrl" id="c7a" style="margin-top:0"></div><div class="code s17" id="k7a" style="margin-top:10px"></div><div class="rightread" id="r7a"></div></div></div>
+     </div>
+     <div class="tab" id="s7t1">
+      <div class="cols wide"><div class="fhost wide" id="h7b"></div>
+       <div><div class="ctrl" id="c7b" style="margin-top:0"></div><div class="code s17" id="k7b" style="margin-top:10px"></div><div class="rightread" id="r7b"></div></div></div>
+     </div>
+     <div class="tab" id="s7t2">
+      <div class="cols wide"><div class="fhost wide low" id="h7c"></div>
+       <div><div class="ctrl" id="c7c" style="margin-top:0"></div><div class="code s17" id="k7c" style="margin-top:10px"></div><div class="rightread" id="r7c"></div></div></div>
+     </div>
+    </section>
+
+    <!-- ===== Écran 8 ===== -->
+    <section class="screen" id="s8">
+     <div class="head"><h2><span class="n">8</span><span>À retenir : les quatre valeurs de <code>position</code></span></h2></div>
+     <table class="cmp" id="cmp">
+      <thead><tr><th></th><th><code>static</code></th><th><code>relative</code></th><th><code>absolute</code></th><th><code>fixed</code></th></tr></thead>
+      <tbody>
+       <tr><th>Sort du flux ?</th><td class="n">Non</td><td class="n">Non</td><td class="y">Oui</td><td class="y">Oui</td></tr>
+       <tr><th>Garde sa place ?</th><td class="n">Oui</td><td class="n">Oui : l'espace d'origine reste réservé</td><td class="y">Non : les éléments suivants remontent</td><td class="y">Non</td></tr>
+       <tr><th>Repère de <code>top</code>, <code>right</code>, <code>bottom</code>, <code>left</code></th><td>Aucun : sans effet</td><td>Sa propre place d'origine</td><td>Ancêtre positionné le plus proche, sinon la page</td><td>La fenêtre (reste en place au défilement)</td></tr>
+       <tr><th>Dans le TP 01</th><td>Les éléments par défaut</td><td>Le cadre <code>#carousel-container</code></td><td>La légende, « Précédent », « Suivant »</td><td>Le pied de page</td></tr>
+      </tbody>
+     </table>
+     <div class="sticky">Au programme aussi : <code>sticky</code> (reste dans le flux, puis se fige au défilement). Il n'est pas utilisé dans ce TP.</div>
+    </section>
+
+    <!-- ===== Écran 9 ===== -->
+    <section class="screen" id="s9">
+     <div class="head"><h2><span class="n">9</span><span>Quatre questions pour finir</span></h2></div>
+     <div class="qa" id="qa"></div>
+    </section>
+
+   </div>
+   <div class="band bottom">
+    <span>@Anis Ben Nacib</span>
+    <span class="nav"><button id="prev" type="button">◀ Précédent</button><span id="num">1 / 9</span><button id="next" type="button">Suivant ▶</button></span>
+    <span class="hint">← → naviguer · N notes · R réinitialiser</span>
+   </div>
+  </div>
+ </div>
+ <aside id="notes" aria-label="Notes pour l'enseignant"><div class="in" id="notes-in"></div></aside>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* =====================================================================
+   1. CODE EXÉCUTÉ DANS LES PAGES DE DÉMONSTRATION (iframes)
+   Ce code n'est pas montré aux élèves.
+   ===================================================================== */
+function frameMain(){
+  var CFG = window.__CFG || {};
+  var NAME = window.name;
+  var doc = document;
+  var labelsOn = true;
+  var ov = null;
+  function round(v){ return Math.round(v*10)/10; }
+  function mk(cls){ var d = doc.createElement('div'); d.className = 'ov ' + cls; doc.body.appendChild(d); return d; }
+  function buildOverlay(){
+    ov = { ghost: mk('ghost'), ghostLab: mk('lab'), dot: mk('dot'),
+      ln: { top: mk('ln'), bottom: mk('ln'), left: mk('ln'), right: mk('ln') },
+      lb: { top: mk('lab sm'), bottom: mk('lab sm'), left: mk('lab sm'), right: mk('lab sm') } };
+  }
+  function box(d, x, y, w, h){ d.style.display = 'block'; d.style.left = x + 'px'; d.style.top = y + 'px'; d.style.width = w + 'px'; d.style.height = h + 'px'; }
+  function at(d, x, y, txt){ d.style.display = 'block'; d.style.left = x + 'px'; d.style.top = y + 'px'; d.style.width = ''; d.style.height = ''; d.textContent = txt; }
+  function hide(d){ d.style.display = 'none'; }
+  function hideAll(){
+    if (!ov) return;
+    hide(ov.ghost); hide(ov.ghostLab); hide(ov.dot);
+    ['top','bottom','left','right'].forEach(function(s){ hide(ov.ln[s]); hide(ov.lb[s]); });
+  }
+  function nearest(t){
+    var p = t.parentElement;
+    while (p && p !== doc.body && p !== doc.documentElement){
+      if (getComputedStyle(p).position !== 'static') return p;
+      p = p.parentElement;
+    }
+    return null;
+  }
+  function overlay(t, pos){
+    hideAll();
+    if (!t || pos === 'static' || !labelsOn) return pos === 'static' ? 'aucun' : 'aucun';
+    var cs = getComputedStyle(t), r = t.getBoundingClientRect(), de = doc.documentElement, R, kind, txt;
+    if (pos === 'relative'){
+      kind = 'place';
+      var dx = parseFloat(cs.left) || 0, dy = parseFloat(cs.top) || 0;
+      R = { l: r.left - dx, t: r.top - dy, r: r.right - dx, b: r.bottom - dy };
+      if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5){
+        box(ov.ghost, R.l, R.t, R.r - R.l, R.b - R.t);
+        var gx = Math.max(R.r, r.right) + 8;
+        if (gx > de.clientWidth - 150) gx = R.l + 8;
+        at(ov.ghostLab, gx, R.t + (R.b - R.t) / 2 - 12, "place d'origine");
+      }
+    } else if (pos === 'absolute'){
+      var a = nearest(t);
+      if (a){
+        kind = 'parent'; txt = 'repère : le parent';
+        var ar = a.getBoundingClientRect(), l = ar.left + a.clientLeft, tp = ar.top + a.clientTop;
+        R = { l: l, t: tp, r: l + a.clientWidth, b: tp + a.clientHeight };
+      } else {
+        kind = 'page'; txt = 'repère : la page';
+        var px = window.pageXOffset, py = window.pageYOffset;
+        R = { l: -px, t: -py, r: -px + de.clientWidth, b: -py + de.clientHeight };
+      }
+    } else {
+      kind = 'fenetre'; txt = 'repère : la fenêtre';
+      R = { l: 0, t: 0, r: de.clientWidth, b: de.clientHeight };
+    }
+    if (kind !== 'place'){
+      at(ov.dot, R.l, R.t, '');
+    }
+    var cx = r.left + r.width / 2, cy = r.top + r.height / 2, st = t.style;
+    function vline(side, y1, y2){
+      var y0 = Math.min(y1, y2), len = Math.abs(y2 - y1);
+      if (len < 1) return;
+      box(ov.ln[side], cx - 1.5, y0, 3, len);
+      at(ov.lb[side], Math.min(cx + 8, de.clientWidth - 125), Math.max(2, Math.min(y0 + len / 2 - 12, de.clientHeight - 30)), side + ': ' + st.getPropertyValue(side));
+    }
+    function hline(side, x1, x2){
+      var x0 = Math.min(x1, x2), len = Math.abs(x2 - x1);
+      if (len < 1) return;
+      box(ov.ln[side], x0, cy - 1.5, len, 3);
+      at(ov.lb[side], Math.max(4, Math.min(x0 + len / 2 - 40, de.clientWidth - 125)), (side === 'right' || cy - 34 < 2) ? cy + 6 : cy - 34, side + ': ' + st.getPropertyValue(side));
+    }
+    if (st.getPropertyValue('top'))    vline('top', R.t, r.top);
+    if (st.getPropertyValue('bottom')) vline('bottom', r.bottom, R.b);
+    if (st.getPropertyValue('left'))   hline('left', R.l, r.left);
+    if (st.getPropertyValue('right'))  hline('right', r.right, R.r);
+    return kind;
+  }
+  function update(){
+    var de = doc.documentElement, rects = {}, pos = 'static', kind = 'aucun';
+    (CFG.measure || []).forEach(function(id){
+      var e = doc.getElementById(id);
+      if (e){ var r = e.getBoundingClientRect(); rects[id] = { x: round(r.left), y: round(r.top), w: round(r.width), h: round(r.height) }; }
+    });
+    var t = CFG.target ? doc.getElementById(CFG.target) : null;
+    if (t) pos = getComputedStyle(t).position;
+    if (CFG.overlay){
+      if (!ov) buildOverlay();
+      kind = overlay(t, pos);
+    }
+    parent.postMessage({ op: 'state', frame: NAME, pos: pos, kind: kind,
+      scrollY: Math.round(window.pageYOffset), maxScroll: Math.max(0, de.scrollHeight - de.clientHeight),
+      rects: rects }, '*');
+  }
+  window.addEventListener('message', function(e){
+    var m = e.data || {};
+    if (m.op === 'apply'){
+      for (var id in m.rules){ var n = doc.getElementById(id); if (n) n.style.cssText = m.rules[id]; }
+      update();
+    } else if (m.op === 'scroll'){
+      window.scrollTo({ top: m.y === 'max' ? 10000000 : m.y, left: 0, behavior: m.smooth ? 'smooth' : 'auto' });
+      update();
+    } else if (m.op === 'cls'){
+      doc.body.classList.toggle(m.cls, !!m.on); update();
+    } else if (m.op === 'labels'){
+      labelsOn = !!m.on; update();
+    } else if (m.op === 'ping'){
+      update();
+    }
+  });
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  window.addEventListener('keydown', function(e){
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (['ArrowLeft','ArrowRight','n','N','r','R','1','2','3','4'].indexOf(e.key) > -1){
+      e.preventDefault();
+      parent.postMessage({ op: 'key', key: e.key }, '*');
+    }
+  });
+  window.addEventListener('load', function(){
+    update();
+    parent.postMessage({ op: 'ready', frame: NAME }, '*');
+  });
+}
+
+/* =====================================================================
+   2. FEUILLES DE STYLE ET PAGES DES DÉMONSTRATIONS
+   ===================================================================== */
+var FRAME_CSS =
+ 'html,body{margin:0;padding:0}' +
+ 'body{font-family:Aptos,sans-serif;font-size:17px;line-height:1.35;color:#111;background:#fff;overflow-x:hidden}' +
+ '.contenu{padding:14px}' +
+ '.bloc,.parent,.ligne,.num,.entete{box-sizing:border-box}' +
+ '.bloc{width:300px;height:56px;margin:0 0 10px 0;padding:0 14px;border:2px solid #37474f;border-radius:6px;background:#cfe3ff;font-weight:700;line-height:52px}' +
+ '.bloc.apres{margin:10px 0 0 0}' +
+ '.bloc.v{background:#d3efc9}' +
+ '.bloc.cible{background:#ffb74d;margin:0}' +
+ '.bsmall{width:170px}' +
+ '.parent{margin:0 0 10px 60px;width:400px;padding:12px 14px 14px;border:3px dashed #2e7d32;background:#f4faf0;border-radius:8px}' +
+ '.etiq{font-weight:700;color:#1b5e20;margin:0 0 6px;font-size:16px}' +
+ '.entete{height:52px;line-height:50px;text-align:center;background:#eceff1;border-bottom:2px solid #90a4ae;font-weight:700;color:#37474f}' +
+ '.parent.abs{margin:20px 0 0 120px;width:420px;padding:12px 14px 2px}' +
+ '.parent.abs p{margin:8px 0}' +
+ '.suite{margin:14px;font-weight:700;color:#455a64}' +
+ '.ligne{margin:0}' +
+ 'input[type="button"].cbtn{font:700 17px Aptos,sans-serif;padding:8px 22px;border:2px solid #37474f;border-radius:6px;background:#ffb74d;color:#111;cursor:default}' +
+ '.num{height:34px;line-height:34px;padding:0 12px;margin:0 0 6px;border-left:6px solid #90caf9;background:#f1f7ff}' +
+ 'h3.tt{margin:10px 0 10px;font-size:20px}' +
+ '.ov{position:fixed;display:none;pointer-events:none;z-index:2147483000;box-sizing:border-box}' +
+ '.ov.ghost{border:3px dashed #546e7a;background:rgba(84,110,122,.12)}' +
+ '.ov.dot{width:16px;height:16px;border-radius:50%;background:#d32f2f;border:3px solid #fff;transform:translate(-8px,-8px)}' +
+ '.ov.ln{background:#d32f2f}' +
+ '.ov.lab{padding:1px 7px;border:2px solid #263238;border-radius:5px;background:#fff;font:700 16px/1.3 Aptos,sans-serif;color:#111;white-space:nowrap}' +
+ '.ov.lab.sm{border-color:#d32f2f;color:#b71c1c}' +
+ '.hl #carousel-container{outline:5px dashed #2e7d32;outline-offset:3px}' +
+ '.hl #legende,.hl #btn-prev,.hl #btn-next{outline:4px solid #e65100}';
+
+function tpCss(o){
+  return 'body{font-family:Verdana,sans-serif;background-color:#eef6f7;color:#333333;text-align:center;margin:0;' + (o.pad ? 'padding-bottom:50px;' : '') + '}' +
+   'header{background-color:#1b5e20;color:white;padding:20px 0;text-align:center;box-shadow:0px 2px 5px #bbb}' +
+   'h1{font-size:28px;margin:0}' +
+   '#slogan{font-size:15px;margin:5px 0 0 0}' +
+   '#carousel-container{width:600px;height:400px;margin:30px auto 0 auto;border:2px solid #dddddd;border-radius:8px;background-color:white;overflow:hidden;' + (o.rel ? 'position:relative;' : '') + '}' +
+   '#carousel{width:100%;height:100%;object-fit:cover}' +
+   '#legende{position:absolute;bottom:0;left:0;width:100%;background-color:rgba(255,255,255,0.8);color:#1b5e20;font-weight:bold;font-size:15px;padding:6px 0}' +
+   'input[type="button"]{padding:10px 25px;margin:5px;border:none;border-radius:4px;background-color:#1f7a70;color:#ffffff;font-size:15px;cursor:pointer}' +
+   '#btn-prev,#btn-next{position:absolute;top:180px}' +
+   '#btn-prev{left:10px}' +
+   '#btn-next{right:10px}' +
+   '#lecteur{width:300px;margin:15px auto 0 auto;padding:10px;background-color:white;border-radius:8px;box-shadow:0px 2px 5px #bbb}' +
+   '#etat{font-size:13px;font-style:italic;margin:5px 0 0 0}' +
+   'footer{font-size:14px;padding:8px 0;background-color:#eef6f7;position:fixed;bottom:0;left:0;width:100%}';
+}
+
+var SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3f4"/><stop offset="1" stop-color="#e8f5e9"/></linearGradient></defs><rect width="1200" height="800" fill="url(#c)"/><circle cx="900" cy="190" r="70" fill="#ffe082"/><path d="M0 560 L260 330 L470 540 L690 300 L960 560 L1200 420 L1200 800 L0 800Z" fill="#66a36a"/><path d="M0 650 L300 480 L560 640 L820 470 L1200 660 L1200 800 L0 800Z" fill="#2e7d32"/></svg>';
+var IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(SVG);
+
+function frameDoc(css, body, cfg){
+  return '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><style>' + FRAME_CSS + css + '</style></head><body>' +
+    body + '<script>window.__CFG=' + JSON.stringify(cfg) + ';<\/script><script>(' + frameMain.toString() + ')();<\/script></body></html>';
+}
+function bloc(id, txt, cls){ return '<div id="' + id + '" class="bloc ' + (cls || '') + '">' + txt + '</div>'; }
+
+function flowDoc(){
+  return frameDoc('', '<div class="contenu">' + bloc('blocA', 'Bloc A') + bloc('blocB', 'Bloc B', 'cible') + bloc('blocC', 'Bloc C', 'v apres') + bloc('blocD', 'Bloc D', 'apres') + '</div>',
+    { target: 'blocB', overlay: true, measure: ['blocA', 'blocB', 'blocC', 'blocD'] });
+}
+function absDoc(){
+  return frameDoc('',
+    '<div class="entete">En-tête de la page</div>' +
+    '<div id="parent" class="parent abs"><div class="etiq">parent</div>' +
+    '<p id="p1">Paragraphe 1</p>' +
+    '<div class="ligne"><input id="bouton" class="cbtn" type="button" value="Bouton"></div>' +
+    '<p id="p2">Paragraphe 2</p></div>' +
+    '<p class="suite">Suite de la page</p>',
+    { target: 'bouton', overlay: true, measure: ['bouton', 'p1', 'p2', 'parent'] });
+}
+function fixedDoc(){
+  var lignes = '';
+  for (var i = 1; i <= 18; i++) lignes += '<div class="num">Ligne ' + i + '</div>';
+  return frameDoc('',
+    '<div class="contenu">' + bloc('boite', 'Boîte', 'cible bsmall') + '<h3 id="titre" class="tt">Titre de la page</h3>' + lignes + '</div>',
+    { target: 'boite', overlay: true, measure: ['boite', 'titre'] });
+}
+function sandboxDoc(){
+  return frameDoc('',
+    '<div class="contenu">' + bloc('blocA', 'Bloc A') +
+    '<div id="parent" class="parent"><div class="etiq">parent</div>' + bloc('p1', 'Bloc P1') + bloc('blocB', 'Bloc B', 'cible') + bloc('p2', 'Bloc P2', 'v apres') + '</div>' +
+    bloc('blocD', 'Bloc D') + bloc('blocE', 'Bloc E') + bloc('blocF', 'Bloc F') + bloc('blocG', 'Bloc G') + '</div>',
+    { target: 'blocB', overlay: true, measure: ['blocB', 'p1', 'p2', 'parent'] });
+}
+function cadreDoc(rel){
+  return frameDoc(tpCss({ rel: rel, pad: false }),
+    '<figure id="carousel-container"><img id="carousel" src="' + IMG + '" alt="Photo de la galerie">' +
+    '<figcaption id="legende">Image 1 / 6</figcaption>' +
+    '<input type="button" id="btn-prev" value="Précédent"><input type="button" id="btn-next" value="Suivant"></figure>',
+    { target: null, overlay: false, measure: ['carousel-container', 'legende', 'btn-prev', 'btn-next'] });
+}
+function pageDoc(pad){
+  return frameDoc(tpCss({ rel: true, pad: pad }),
+    '<header><h1>Balade dans la nature</h1><p id="slogan">Faites défiler les paysages en écoutant une récitation du Coran.</p></header>' +
+    '<main><figure id="carousel-container"><img id="carousel" src="' + IMG + '" alt="Photo de la galerie">' +
+    '<figcaption id="legende">Image 1 / 6</figcaption>' +
+    '<input type="button" id="btn-prev" value="Précédent"><input type="button" id="btn-next" value="Suivant"></figure>' +
+    '<div id="lecteur"><input type="button" id="btn-play" value="Écouter"><input type="button" id="btn-pause" value="Pause"><p id="etat">Son arrêté</p></div></main>' +
+    '<footer id="pied">&copy; 2026 Balade Nature – Tous droits réservés.</footer>',
+    { target: null, overlay: false, measure: ['lecteur', 'pied', 'carousel-container'] });
+}
+/* le corps de la page porte l'identifiant « corps » : on l'ajoute après coup */
+function pageDocBody(pad){ return pageDoc(pad).replace('<body>', '<body id="corps">'); }
+
+/* =====================================================================
+   3. OUTILS : code CSS affiché, démonstrations, messages
+   ===================================================================== */
+var $ = function(id){ return document.getElementById(id); };
+var N = 9;
+var cur = 0;
+var demos = {};
+var inited = {};
+var resets = {};
+var REP = { aucun: 'aucun (static)', place: "sa place d'origine", parent: 'le parent (position: relative)', page: 'la page', fenetre: 'la fenêtre' };
+
+function esc(s){ return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function S(sel){ return { sel: sel, d: Array.prototype.slice.call(arguments, 1) }; }
+function S1(sel){ var b = S.apply(null, arguments); b.one = true; return b; }
+function bare(x){ return x.replace(/^[+!]/, ''); }
+function isCom(x){ return bare(x).indexOf('/*') === 0; }
+function cssOf(b){ return b.d.filter(function(x){ return !isCom(x); }).map(function(x){ return bare(x) + ';'; }).join(' '); }
+function idOf(sel){ return sel === 'body' ? 'corps' : sel.replace(/^#/, ''); }
+function declHTML(t){
+  var i = t.indexOf(':');
+  return '<span class="prop">' + esc(t.slice(0, i)) + '</span>: <span class="val">' + esc(t.slice(i + 1).trim()) + '</span>;';
+}
+function codeHTML(blocks){
+  return blocks.map(function(b){
+    if (b.one){
+      var cls1 = b.d[0][0] === '+' ? 'ln new' : 'ln';
+      return '<span class="' + cls1 + '"><span class="sel">' + esc(b.sel) + '</span> { ' + declHTML(bare(b.d[0])) + ' }</span>';
+    }
+    var lines = ['<span class="ln"><span class="sel">' + esc(b.sel) + '</span> {</span>'];
+    b.d.forEach(function(x){
+      var cls = 'ln', t = x;
+      if (t[0] === '+'){ cls += ' new'; t = t.slice(1); }
+      else if (t[0] === '!'){ cls += ' err'; t = t.slice(1); }
+      if (t.indexOf('/*') === 0) lines.push('<span class="' + cls + '">  <span class="com">' + esc(t) + '</span></span>');
+      else lines.push('<span class="' + cls + '">  ' + declHTML(t) + '</span>');
+    });
+    lines.push('<span class="ln">}</span>');
+    return lines.join('');
+  }).join('<span class="ln gap"> </span>');
+}
+function lineCount(blocks){
+  return blocks.reduce(function(n, b){ return n + (b.one ? 1 : b.d.length + 2); }, 0) + (blocks.length - 1) * 0.4;
+}
+function sg(v){ v = Math.round(v); return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v); }
+function dep(c, b){
+  if (!c || !b) return '';
+  var dx = c.x - b.x, dy = c.y - b.y;
+  if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return '<b>aucun déplacement</b>';
+  return 'x <b>' + sg(dx) + ' px</b> · y <b>' + sg(dy) + ' px</b>';
+}
+
+function mkIframe(o){
+  var f = document.createElement('iframe');
+  f.className = 'demo';
+  f.name = o.id; f.id = 'f-' + o.id;
+  f.title = o.title || 'Démonstration';
+  f.srcdoc = o.html;
+  o.host.appendChild(f);
+  return f;
+}
+
+/* démonstration à étapes : code, boutons, mesures */
+function stepDemo(o){
+  var d = { id: o.id, screen: o.screen, k: 0, base: null, st: null, ready: false, rules: {}, o: o, buttons: [] };
+  d.f = mkIframe(o);
+  demos[o.id] = d;
+  d.post = function(m){ if (d.f.contentWindow) d.f.contentWindow.postMessage(m, '*'); };
+  var maxL = 0; o.steps.forEach(function(s){ maxL = Math.max(maxL, lineCount(s.blocks)); });
+  var fs = o.codeFont || 20, lh = fs * 1.45;
+  o.code.style.minHeight = Math.ceil(maxL * lh + (o.codeFont ? 24 : 28) + 2) + 'px';
+  function rulesFor(k){
+    var r = {};
+    o.ids.forEach(function(i){ r[i] = ''; });
+    o.steps[k].blocks.forEach(function(b){ if (!b.noapply) r[idOf(b.sel)] = cssOf(b); });
+    return r;
+  }
+  d.set = function(k){
+    d.k = k; d.rules = rulesFor(k);
+    if (d.ready) d.post({ op: 'apply', rules: d.rules });
+    o.code.innerHTML = codeHTML(o.steps[k].blocks);
+    d.buttons.forEach(function(b, i){ b.classList.toggle('on', i === k); });
+    if (o.after && d.ready) o.after(d, k);
+  };
+  o.steps.forEach(function(s, i){
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn'; b.id = o.id + '-step' + i; b.textContent = s.label;
+    b.onclick = function(){ d.set(i); };
+    o.ctrl.appendChild(b); d.buttons.push(b);
+  });
+  (o.extra || []).forEach(function(x){
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn' + (o.extraHost ? ' sm' : ''); b.id = o.id + '-' + x.key; b.textContent = x.label;
+    b.onclick = function(){ x.run(d); };
+    (o.extraHost || o.ctrl).appendChild(b);
+  });
+  d.onReady = function(){
+    d.ready = true;
+    d.post({ op: 'apply', rules: d.rules });
+    if (o.afterReady) o.afterReady(d);
+  };
+  d.onState = function(m){
+    d.st = m;
+    if (d.k === 0 && !o.noBase) d.base = m.rects;
+    if (o.render && o.read) o.read.innerHTML = o.render(m, d);
+  };
+  d.reset = function(){ d.set(0); d.post({ op: 'scroll', y: 0 }); };
+  d.set(0);
+  return d;
+}
+
+function scrollBtns(){
+  return [
+    { key: 'down', label: '↓ Défiler', run: function(d){ d.post({ op: 'scroll', y: 300, smooth: true }); } },
+    { key: 'up', label: '↑ Haut', run: function(d){ d.post({ op: 'scroll', y: 0, smooth: true }); } }
+  ];
+}
+
+window.addEventListener('message', function(e){
+  var m = e.data;
+  if (!m || typeof m !== 'object') return;
+  if (m.op === 'key'){ handleKey(m.key); return; }
+  var d = demos[m.frame];
+  if (!d) return;
+  if (m.op === 'ready') d.onReady();
+  else if (m.op === 'state') d.onState(m);
+});
+
+/* =====================================================================
+   4. LES ÉCRANS
+   ===================================================================== */
+var init = {};
+
+/* ---- 1 : static ---- */
+init[1] = function(){
+  stepDemo({
+    id: 'f1', screen: 1, host: $('h1'), html: flowDoc(), ids: ['blocB'], code: $('k1'), ctrl: $('c1'), read: $('r1'),
+    title: 'Blocs A, B, C et D empilés',
+    steps: [
+      { label: 'Départ', blocks: [S('#blocB', 'position: static')] },
+      { label: '① + top, left', blocks: [S('#blocB', 'position: static', '+top: 40px', '+left: 60px')] }
+    ],
+    render: function(m, d){
+      var b = d.base || m.rects, c = m.rects;
+      return 'Bloc B : ' + dep(c.blocB, b.blocB) + '<br>Bloc C : ' + dep(c.blocC, b.blocC);
+    }
+  });
+};
+
+/* ---- 2 : relative ---- */
+init[2] = function(){
+  stepDemo({
+    id: 'f2', screen: 2, host: $('h2'), html: flowDoc(), ids: ['blocB'], code: $('k2'), ctrl: $('c2'), read: $('r2'),
+    title: 'Blocs A, B, C et D empilés',
+    steps: [
+      { label: 'Départ', blocks: [S('#blocB', 'position: static')] },
+      { label: '① position: relative', blocks: [S('#blocB', '+position: relative')] },
+      { label: '② + top, left', blocks: [S('#blocB', 'position: relative', '+top: 20px', '+left: 60px')] }
+    ],
+    render: function(m, d){
+      var b = d.base || m.rects, c = m.rects;
+      return 'Bloc B : ' + dep(c.blocB, b.blocB) + '<br>Bloc C : ' + dep(c.blocC, b.blocC) + ' · Bloc D : ' + dep(c.blocD, b.blocD);
+    }
+  });
+};
+
+/* ---- 3 : absolute ---- */
+init[3] = function(){
+  stepDemo({
+    id: 'f3', screen: 3, host: $('h3'), html: absDoc(), ids: ['bouton', 'parent'], code: $('k3'), ctrl: $('c3'), read: $('r3'),
+    title: 'Page avec un parent contenant un bouton',
+    steps: [
+      { label: 'Départ', blocks: [S('#bouton', 'position: static')] },
+      { label: '① absolute', blocks: [S('#bouton', '+position: absolute', '+top: 20px', '+left: 60px')] },
+      { label: '② + parent relative', blocks: [S('#bouton', 'position: absolute', 'top: 20px', 'left: 60px'), S('#parent', '+position: relative')] }
+    ],
+    render: function(m, d){
+      var b = d.base || m.rects, c = m.rects, up = b.p2.y - c.p2.y;
+      var s2 = up > 0.5 ? 'Paragraphe 2 : <b>monte de ' + Math.round(up) + ' px</b>' : 'Paragraphe 2 : <b>ne bouge pas</b>';
+      return 'Bouton : x = <b>' + Math.round(c.bouton.x) + '</b>, y = <b>' + Math.round(c.bouton.y) + '</b> · ' + s2 + '<br>Repère : <b>' + REP[m.kind] + '</b>';
+    }
+  });
+};
+
+/* ---- 4 : fixed ---- */
+init[4] = function(){
+  stepDemo({
+    id: 'f4', screen: 4, host: $('h4'), html: fixedDoc(), ids: ['boite'], code: $('k4'), ctrl: $('c4'), read: $('r4'),
+    title: 'Page longue qui défile', noBase: true, extraHost: $('x4'),
+    steps: [
+      { label: 'Départ', blocks: [S('#boite', 'position: static')] },
+      { label: '① fixed', blocks: [S('#boite', '+position: fixed', '+top: 20px', '+right: 20px')] },
+      { label: '② absolute', blocks: [S('#boite', '+position: absolute', 'top: 20px', 'right: 20px')] }
+    ],
+    extra: scrollBtns(),
+    render: function(m){
+      var c = m.rects;
+      return 'Page défilée de <b>' + m.scrollY + ' px</b><br>Boîte : y = <b>' + Math.round(c.boite.y) + '</b> · Titre : y = <b>' + Math.round(c.titre.y) + '</b> (dans la fenêtre)';
+    }
+  });
+};
+
+/* ---- 5 : bac à sable ---- */
+init[5] = function(){
+  var sb = { pos: 'static', top: null, right: null, bottom: null, left: null, parentRel: false, last: null };
+  var f = mkIframe({ id: 'f5', host: $('h5'), html: sandboxDoc(), title: 'Bac à sable de positionnement' });
+  var d = { id: 'f5', screen: 5, ready: false, f: f, k: 0 };
+  demos.f5 = d;
+  d.post = function(m){ if (f.contentWindow) f.contentWindow.postMessage(m, '*'); };
+  var SIDES = ['top', 'right', 'bottom', 'left'];
+  function val(v){ return v === 0 ? '0' : v + 'px'; }
+  function blocks(){
+    var decl = ['position: ' + sb.pos];
+    SIDES.forEach(function(s){ if (sb[s] !== null) decl.push(s + ': ' + val(sb[s])); });
+    decl = decl.map(function(x){ var key = x.split(':')[0]; return key === sb.last ? '+' + x : x; });
+    var bl = [S.apply(null, ['#blocB'].concat(decl))];
+    if (sb.parentRel) bl.push(S('#parent', (sb.last === 'parent' ? '+' : '') + 'position: relative'));
+    return bl;
+  }
+  function render(){
+    var bl = blocks();
+    $('k5').innerHTML = codeHTML(bl);
+    var rules = { blocB: cssOf(bl[0]), parent: sb.parentRel ? 'position: relative;' : '' };
+    d.rules = rules;
+    if (d.ready) d.post({ op: 'apply', rules: rules });
+    ['static', 'relative', 'absolute', 'fixed'].forEach(function(p){ $('sb-pos-' + p).classList.toggle('on', sb.pos === p); });
+    SIDES.forEach(function(s){ $('sb-v-' + s).textContent = sb[s] === null ? 'auto' : val(sb[s]); });
+    $('sb-parent').textContent = '#parent : ' + (sb.parentRel ? 'relative' : 'static');
+    $('sb-parent').classList.toggle('on', sb.parentRel);
+  }
+  function setPos(p){ sb.pos = p; sb.last = 'position'; render(); }
+  function bump(s, dlt){
+    var v = sb[s] === null ? 0 : sb[s];
+    v = Math.max(-200, Math.min(400, v + dlt));
+    sb[s] = v; sb.last = s; render();
+  }
+  var pr = $('sb-pos');
+  ['static', 'relative', 'absolute', 'fixed'].forEach(function(p){
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn'; b.id = 'sb-pos-' + p; b.textContent = p;
+    b.onclick = function(){ setPos(p); };
+    pr.appendChild(b);
+  });
+  var og = $('sb-off');
+  SIDES.forEach(function(s){
+    var row = document.createElement('div'); row.className = 'off';
+    row.innerHTML = '<span class="lb">' + s + '</span><span class="v" id="sb-v-' + s + '">auto</span>';
+    function mk(txt, id, fn){
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm'; b.id = id; b.textContent = txt; b.onclick = fn; row.appendChild(b);
+    }
+    mk('−', 'sb-' + s + '-m', function(){ bump(s, -20); });
+    mk('+', 'sb-' + s + '-p', function(){ bump(s, 20); });
+    mk('×', 'sb-' + s + '-x', function(){ sb[s] = null; sb.last = null; render(); });
+    og.appendChild(row);
+  });
+  var mc = $('sb-misc');
+  var bp = document.createElement('button'); bp.type = 'button'; bp.className = 'btn sm'; bp.id = 'sb-parent';
+  bp.onclick = function(){ sb.parentRel = !sb.parentRel; sb.last = 'parent'; render(); };
+  mc.appendChild(bp);
+  function mkb(host, txt, id, fn){ var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm'; b.id = id; b.textContent = txt; b.onclick = fn; host.appendChild(b); }
+  mkb(mc, '↺ Réinitialiser', 'sb-reset', function(){ resets[5](); });
+  mkb($('c5'), '↓ Défiler', 'sb-down', function(){ d.post({ op: 'scroll', y: 300, smooth: true }); });
+  mkb($('c5'), '↑ Haut', 'sb-up', function(){ d.post({ op: 'scroll', y: 0, smooth: true }); });
+  d.onReady = function(){ d.ready = true; d.post({ op: 'apply', rules: d.rules }); };
+  d.onState = function(m){
+    d.st = m;
+    var r = m.rects.blocB, out = (m.pos === 'absolute' || m.pos === 'fixed');
+    var anyOff = SIDES.some(function(s){ return sb[s] !== null; });
+    var l1 = 'Bloc B : x = <b>' + Math.round(r.x) + '</b>, y = <b>' + Math.round(r.y) + '</b> · page défilée de <b>' + m.scrollY + ' px</b>';
+    var l2 = 'Sort du flux : <b>' + (out ? 'oui' : 'non') + '</b> · Repère : <b>' + REP[m.kind] + '</b>';
+    if (m.pos === 'static' && anyOff) l2 = '<span class="bad">Sans effet : un élément static ignore top, right, bottom, left.</span>';
+    $('r5').innerHTML = l1 + '<br>' + l2;
+  };
+  resets[5] = function(){
+    sb.pos = 'static'; SIDES.forEach(function(s){ sb[s] = null; }); sb.parentRel = false; sb.last = null;
+    render(); d.post({ op: 'scroll', y: 0 });
+  };
+  render();
+};
+
+/* ---- 6 : lien avec le TP ---- */
+var tabs = {};
+function makeTabs(screen, count, onShow){
+  var t = { cur: 0, count: count };
+  tabs[screen] = t;
+  t.show = function(i){
+    t.cur = i;
+    for (var j = 0; j < count; j++){
+      $('s' + screen + 't' + j).classList.toggle('on', j === i);
+      $('t' + screen + '-' + j).classList.toggle('on', j === i);
+    }
+    onShow(i);
+  };
+  for (var j = 0; j < count; j++){ (function(j){ $('t' + screen + '-' + j).onclick = function(){ t.show(j); }; })(j); }
+}
+function pingScreen(i){
+  Object.keys(demos).forEach(function(k){ var d = demos[k]; if (d.screen === i && d.ready) d.post({ op: 'ping' }); });
+}
+
+init[6] = function(){
+  var ready6 = {};
+  var codeA = [
+    S('#carousel-container', 'position: relative'),
+    S('#legende', 'position: absolute', 'bottom: 0', 'left: 0', 'width: 100%'),
+    S('#btn-prev, #btn-next', 'position: absolute', 'top: 180px'),
+    S1('#btn-prev', 'left: 10px'),
+    S1('#btn-next', 'right: 10px')
+  ];
+  var codeB = [
+    S('footer', 'position: fixed', 'bottom: 0', 'left: 0', 'width: 100%'),
+    S('body', 'padding: 0 0 50px 0')
+  ];
+  $('k6a').innerHTML = codeHTML(codeA);
+  $('k6b').innerHTML = codeHTML(codeB);
+  var hl = false;
+  function build(i){
+    if (ready6[i]) return;
+    ready6[i] = true;
+    if (i === 0){
+      var f = mkIframe({ id: 'f6a', host: $('h6a'), html: cadreDoc(true), title: 'Cadre du TP 01' });
+      var d = { id: 'f6a', screen: 6, ready: false, f: f };
+      demos.f6a = d;
+      d.post = function(m){ f.contentWindow.postMessage(m, '*'); };
+      d.onReady = function(){ d.ready = true; };
+      d.onState = function(m){
+        var c = m.rects['carousel-container'], lg = m.rects.legende, p = m.rects['btn-prev'], n = m.rects['btn-next'];
+        var pl = c.x + 2, pt = c.y + 2, pr = c.x + c.w - 2, pb = c.y + c.h - 2;
+        var gb = pb - (lg.y + lg.h);
+        $('r6a').innerHTML = 'Légende : à <b>' + Math.round(gb) + ' px</b> du bas du cadre<br>' +
+          'Précédent : à <b>' + Math.round(p.x - pl) + ' px</b> du bord gauche et <b>' + Math.round(p.y - pt) + ' px</b> du haut<br>' +
+          'Suivant : à <b>' + Math.round(pr - (n.x + n.w)) + ' px</b> du bord droit';
+      };
+      $('hl-toggle').onclick = function(){
+        hl = !hl;
+        $('hl-toggle').textContent = 'Repères : ' + (hl ? 'oui' : 'non');
+        $('hl-toggle').classList.toggle('on', hl);
+        d.post({ op: 'cls', cls: 'hl', on: hl });
+      };
+      resets[6] = resets[6] || function(){};
+    } else {
+      var d2 = stepDemo({
+        id: 'f6b', screen: 6, host: $('h6b'), html: pageDocBody(true), ids: [], code: $('k6b'), ctrl: $('c6b'), read: $('r6b'),
+        codeFont: 17, noBase: true, title: 'Page du TP 01 (simplifiée) qui défile',
+        steps: [{ label: 'Départ', blocks: codeB.map(function(b){ b.noapply = true; return b; }) }],
+        extra: [
+          { key: 'down', label: '↓ Défiler en bas', run: function(d){ d.post({ op: 'scroll', y: 'max', smooth: true }); } },
+          { key: 'up', label: '↑ Haut', run: function(d){ d.post({ op: 'scroll', y: 0, smooth: true }); } }
+        ],
+        render: function(m){
+          var l = m.rects.lecteur, p = m.rects.pied;
+          var atBottom = m.maxScroll > 0 && m.scrollY >= m.maxScroll - 1;
+          var txt = 'Page défilée de <b>' + m.scrollY + ' px</b> sur ' + m.maxScroll + ' px<br>' +
+            'Pied de page : y = <b>' + Math.round(p.y) + '</b> (toujours en bas)';
+          if (atBottom){
+            var gap = p.y - (l.y + l.h);
+            txt += '<br>' + (gap >= -0.5 ? '<span class="ok">Le lecteur reste visible : ' + Math.round(gap) + ' px de marge.</span>' : '<span class="bad">Le lecteur est recouvert.</span>');
+          }
+          return txt;
+        }
+      });
+      d2.buttons[0].style.display = 'none';
+    }
+  }
+  makeTabs(6, 2, function(i){ build(i); setTimeout(function(){ pingScreen(6); }, 30); });
+  build(0);
+  resets[6] = function(){
+    hl = false; $('hl-toggle').textContent = 'Repères : non'; $('hl-toggle').classList.remove('on');
+    if (demos.f6a) demos.f6a.post({ op: 'cls', cls: 'hl', on: false });
+    if (demos.f6b) demos.f6b.post({ op: 'scroll', y: 0 });
+  };
+};
+
+/* ---- 7 : erreurs fréquentes ---- */
+init[7] = function(){
+  var ready7 = {};
+  function build(i){
+    if (ready7[i]) return;
+    ready7[i] = true;
+    if (i === 0){
+      stepDemo({
+        id: 'f7a', screen: 7, host: $('h7a'), html: cadreDoc(false), ids: ['carousel-container'], code: $('k7a'), ctrl: $('c7a'), read: $('r7a'),
+        codeFont: 17, noBase: true, title: 'Cadre du TP 01 sans position: relative',
+        steps: [
+          { label: "① Voir l'erreur", blocks: [
+            S('#carousel-container', 'width: 600px', 'height: 400px', '!/* position oublié ! */'),
+            S('#legende', 'position: absolute', 'bottom: 0', 'left: 0')] },
+          { label: '② Corriger', blocks: [
+            S('#carousel-container', '+position: relative', 'width: 600px', 'height: 400px'),
+            S('#legende', 'position: absolute', 'bottom: 0', 'left: 0')] }
+        ],
+        render: function(m){
+          var c = m.rects['carousel-container'], l = m.rects.legende;
+          var inside = l.x >= c.x - 1 && l.x + l.w <= c.x + c.w + 1 && l.y >= c.y - 1 && l.y + l.h <= c.y + c.h + 1;
+          return inside
+            ? '<span class="ok">La légende est dans le cadre.</span><br>Repère : le cadre.'
+            : '<span class="bad">La légende est hors du cadre.</span><br>Repère : la page (aucun ancêtre positionné) : elle se colle au bas de la page.';
+        }
+      });
+    } else if (i === 1){
+      stepDemo({
+        id: 'f7b', screen: 7, host: $('h7b'), html: pageDocBody(false), ids: ['corps'], code: $('k7b'), ctrl: $('c7b'), read: $('r7b'),
+        codeFont: 17, noBase: true, title: 'Page du TP 01 avec pied de page fixe',
+        steps: [
+          { label: "① Voir l'erreur", blocks: [
+            S('footer', 'position: fixed', 'bottom: 0', 'left: 0', 'width: 100%'),
+            S('body', '!/* pas de padding en bas */')] },
+          { label: '② Corriger', blocks: [
+            S('footer', 'position: fixed', 'bottom: 0', 'left: 0', 'width: 100%'),
+            S('body', '+padding: 0 0 50px 0')] }
+        ],
+        after: function(d){ d.post({ op: 'scroll', y: 'max' }); },
+        afterReady: function(d){ d.post({ op: 'scroll', y: 'max' }); },
+        render: function(m){
+          var l = m.rects.lecteur, p = m.rects.pied;
+          var atBottom = m.maxScroll > 0 && m.scrollY >= m.maxScroll - 1;
+          if (!atBottom) return 'Faites défiler la page jusqu\'en bas.';
+          var ov = (l.y + l.h) - p.y;
+          return ov > 0.5
+            ? '<span class="bad">Le bas du lecteur est recouvert de ' + Math.round(ov) + ' px par le pied de page.</span>'
+            : '<span class="ok">Rien n\'est recouvert : ' + Math.round(-ov) + ' px de marge sous le lecteur.</span>';
+        }
+      });
+    } else {
+      stepDemo({
+        id: 'f7c', screen: 7, host: $('h7c'), html: flowDoc(), ids: ['blocB'], code: $('k7c'), ctrl: $('c7c'), read: $('r7c'),
+        codeFont: 17, title: 'Blocs A, B, C et D empilés',
+        steps: [
+          { label: "① Voir l'erreur", blocks: [S('#blocB', 'top: 40px', 'left: 60px', '!/* position oublié ! */')] },
+          { label: '② Corriger', blocks: [S('#blocB', '+position: relative', 'top: 40px', 'left: 60px')] }
+        ],
+        render: function(m, d){
+          var b = d.base || m.rects;
+          var t = dep(m.rects.blocB, b.blocB);
+          return 'Bloc B : ' + t + (m.pos === 'static' ? '<br><span class="bad">top et left sont ignorés : B est static.</span>' : '<br><span class="ok">B est décalé : il est en relative.</span>');
+        }
+      });
+    }
+  }
+  makeTabs(7, 3, function(i){ build(i); setTimeout(function(){ pingScreen(7); }, 30); });
+  build(0);
+  resets[7] = function(){
+    Object.keys(demos).forEach(function(k){ var d = demos[k]; if (d.screen === 7 && d.reset) d.reset(); });
+  };
+};
+
+/* ---- 9 : questions ---- */
+var QA = [
+  { q: "Un élément est en position: static. J'écris top: 50px. De combien se déplace-t-il ?",
+    a: "De 0 px : top n'a aucun effet sur un élément static. Il faut au moins position: relative.", ref: 'écrans 1 et 7' },
+  { q: "Un élément en position: relative reçoit left: 60px. Que devient la place qu'il occupait ?",
+    a: "Elle reste réservée : les éléments suivants ne bougent pas. Seul l'élément est décalé, de 60 px vers la droite.", ref: 'écran 2' },
+  { q: "La légende est en position: absolute, mais le cadre n'a pas position: relative. Où se place la légende ?",
+    a: "Par rapport à la page : elle se colle au bas de la page, hors du cadre. Correction : position: relative sur le cadre.", ref: 'écrans 3 et 7' },
+  { q: "Le pied de page est en position: fixed. Qu'arrive-t-il à la dernière ligne du contenu, et comment l'éviter ?",
+    a: "Elle est recouverte : le pied de page ne prend plus de place. On réserve l'espace avec un padding de 50px en bas du body.", ref: 'écrans 4 et 7' }
+];
+init[9] = function(){
+  var host = $('qa');
+  QA.forEach(function(x, i){
+    var c = document.createElement('button');
+    c.type = 'button'; c.className = 'qc'; c.id = 'qc' + (i + 1);
+    c.innerHTML = '<div class="qt"><span class="qn">' + (i + 1) + '</span>' + esc(x.q) + '</div><div class="ans">' + esc(x.a) + '</div><div class="hintq">Réponse au clic · ' + x.ref + '</div>';
+    c.onclick = function(){ c.classList.toggle('open'); };
+    host.appendChild(c);
+  });
+  resets[9] = function(){ Array.prototype.forEach.call(host.children, function(c){ c.classList.remove('open'); }); };
+};
+
+/* =====================================================================
+   5. NOTES POUR L'ENSEIGNANT
+   ===================================================================== */
+var NOTES = [
+ { t: 'Le flux normal', oral: [
+    "Rappeler le flux : chaque bloc prend toute une ligne et se place sous le précédent, dans l'ordre du code HTML.",
+    "Cliquer « ① + top, left » : on écrit top: 40px et left: 60px, rien ne bouge. Lire la mesure : aucun déplacement.",
+    "Annoncer la suite : pour que top et left servent, il faut changer la valeur de position." ],
+   q: ["Où va se placer le bloc B si j'écris top: 40px ?", "Pourquoi les blocs sont-ils les uns sous les autres alors que je n'ai rien écrit ?"],
+   p: ["Beaucoup d'élèves croient que top et left suffisent : c'est l'erreur n° 3 (écran 7).", "static est la valeur par défaut : on ne l'écrit que pour annuler un autre positionnement."] },
+ { t: 'relative', oral: [
+    "Cliquer « ① position: relative » : rien ne bouge. Relative seul ne décale rien.",
+    "Cliquer « ② + top, left » : B se décale de 20 px vers le bas et de 60 px vers la droite. Les pointillés montrent sa place d'origine : l'espace reste réservé.",
+    "Lire la mesure : B se déplace, C et D ne bougent pas." ],
+   q: ["De combien B se déplace-t-il, et par rapport à quoi ?", "Et avec right: 60px au lieu de left: 60px ? (B irait vers la gauche de 60 px.)"],
+   p: ["left: 60px écarte l'élément de 60 px du bord gauche de sa place : il va vers la droite. Les valeurs négatives existent.", "Dans le TP, relative est mis sur le cadre sans aucun décalage : il sert de repère à ses enfants (écrans 3 et 6)."] },
+ { t: 'absolute', oral: [
+    "Départ : le bouton est dans le flux, entre les deux paragraphes.",
+    "Cliquer « ① absolute » : le bouton sort du flux, le paragraphe 2 remonte. Les traits rouges montrent top et left mesurés depuis le repère : ici la page, car le parent n'est pas positionné.",
+    "Cliquer « ② + parent relative » : même bouton, même code sur le bouton, mais le repère devient le parent : le bouton saute dans la carte." ],
+   q: ["Pourquoi le paragraphe 2 est-il remonté ?", "Par rapport à quoi le bouton est-il placé à l'étape ① ? et à l'étape ② ?", "Que faut-il écrire pour que le bouton reste dans la carte ?"],
+   p: ["Le repère est l'ancêtre positionné le plus proche, c'est-à-dire dont position n'est pas static. On écrit relative parce que c'est la seule valeur qui ne déplace rien.", "Un élément absolute ne s'étire plus : sa largeur dépend de son contenu. C'est pourquoi la légende du TP a width: 100%.", "Les décalages se mesurent depuis l'intérieur de la bordure du parent. Pour la page, le repère est un rectangle de la taille de la fenêtre, ancré en haut de la page : il défile avec elle."] },
+ { t: 'fixed', oral: [
+    "Étape ① : la boîte devient fixed. Cliquer « ↓ Défiler » : le titre monte, la boîte reste à 20 px du haut de la fenêtre. Lire les deux mesures.",
+    "Étape ② : mêmes décalages en absolute : la boîte défile avec la page. Remonter et redescendre pour comparer." ],
+   q: ["Qu'est-ce qui reste en place pendant le défilement ?", "Pour un bouton « haut de page » qui suit l'élève : fixed ou absolute ?"],
+   p: ["fixed sort du flux : il peut recouvrir du contenu (erreur n° 2, écran 7).", "Dans la démo, la « fenêtre » est la zone encadrée : c'est elle qui défile.", "Un parent en relative ne change pas le repère de fixed : c'est toujours la fenêtre."] },
+ { t: 'Le bac à sable', oral: [
+    "Laisser les élèves dicter les réglages. Séquences utiles : static + top (rien ne se passe) ; relative + top et left ; absolute + bottom et right avec #parent static puis relative ; fixed + bottom et right, puis défilement.",
+    "Le code se met à jour à chaque clic ; la ligne modifiée est surlignée." ],
+   q: ["Que fait bottom: 0 sur un élément absolute dont le parent n'est pas positionné ? (Il se colle au bas de la fenêtre au chargement de la page.)", "Que fait right: 20px sur un élément fixed ?"],
+   p: ["top et bottom (ou left et right) en même temps : à éviter, hors objectif du TP.", "Unités de l'annexe : px et % seulement. Un pourcentage se calcule sur la taille du repère.", "Les valeurs négatives sont acceptées."] },
+ { t: 'Dans le TP 01', oral: [
+    "Onglet ① : le cadre est en relative (contour vert), la légende et les deux boutons en absolute (contours orange). Activer « Repères ».",
+    "Lire les mesures : la légende touche le bas du cadre ; les boutons sont à 15 px des bords (left ou right 10 px + marge de 5 px).",
+    "Onglet ② : le pied de page est fixed, collé en bas de la fenêtre. Défiler en bas, montrer que le padding du body réserve la place en bas." ],
+   q: ["Pourquoi la légende a-t-elle width: 100% ?", "Pourquoi top: 180px pour les boutons ? (Environ le milieu d'un cadre de 400 px ; le corrigé note un écart de 3,5 px.)"],
+   p: ["La photo de la démo est un dessin intégré à la page : ce ne sont pas les fichiers du TP.", "Les boutons du TP sont des input de type button : la démo en reprend la mise en forme, sans leur JavaScript.", "Le TP fournit padding-bottom: 50px sur le body, propriété absente de l'annexe CSS3 (seul padding y figure) : le support montre l'écriture abrégée padding: 0 0 50px 0, de même effet.", "Les touches 1 et 2 changent d'onglet."] },
+ { t: 'Erreurs fréquentes', oral: [
+    "Pour chaque onglet : montrer l'erreur, demander aux élèves de la diagnostiquer, puis cliquer « ② Corriger »." ],
+   q: ["① La légende est hors du cadre : que manque-t-il ?", "② Le bas du lecteur est caché : que faut-il ajouter sur le body ?", "③ top: 40px ne fait rien : pourquoi ?"],
+   p: ["① est l'erreur la plus fréquente en copie : le cadre doit être positionné (relative). Sans cela, bottom: 0 se mesure sur le bas de la première fenêtre, pas sur celui du cadre.", "② ne se voit pas sur un grand écran, car la page tient dans la fenêtre : réduire la hauteur de la fenêtre du navigateur pour la provoquer.", "③ aucun message d'erreur : le navigateur ignore les décalages sur un élément static.", "Les touches 1, 2 et 3 changent d'onglet."] },
+ { t: 'À retenir', oral: [
+    "Lire le tableau colonne par colonne ; faire compléter à voix haute avant de lire la ligne « Repère ».",
+    "Ne pas démontrer sticky : une phrase suffit, il n'est pas utilisé dans ce TP." ],
+   q: ["Quelles valeurs sortent du flux ? (absolute et fixed.)", "Quelle valeur laisse un espace vide à l'origine ? (relative.)"],
+   p: ["« Garde sa place » : relative laisse un espace réservé ; absolute et fixed ne laissent rien, les éléments suivants remontent.", "Repère de absolute : l'ancêtre positionné le plus proche ; sans ancêtre positionné, la page."] },
+ { t: 'Questions orales', oral: [
+    "Lire une question, laisser 10 à 15 secondes, puis cliquer sur la carte (ou touche 1 à 4) pour afficher la réponse.",
+    "Les questions renvoient aux écrans 1, 2, 3 et 4 / 7." ],
+   q: [], p: ["Si une réponse reste confuse, revenir à l'écran indiqué sur la carte."] }
+];
+function li(a){ return a.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join(''); }
+function renderNotes(){
+  var n = NOTES[cur];
+  var h = '<span class="tag">Notes pour l\'enseignant</span><h3>Écran ' + (cur + 1) + ' — ' + esc(n.t) + '</h3>' +
+    '<h4>Déroulé oral</h4><ol>' + li(n.oral) + '</ol>';
+  if (n.q.length) h += '<h4>Questions à poser</h4><ul>' + li(n.q) + '</ul>';
+  h += '<h4>Pièges</h4><ul>' + li(n.p) + '</ul>';
+  $('notes-in').innerHTML = h;
+}
+function toggleNotes(){ $('notes').classList.toggle('on'); fit(); }
+
+/* =====================================================================
+   6. NAVIGATION, ÉCHELLE, CLAVIER
+   ===================================================================== */
+function fit(){
+  var a = $('area'), s = Math.min(a.clientWidth / 1280, a.clientHeight / 720), st = $('stage');
+  st.style.transform = 'scale(' + s + ')';
+  st.style.left = ((a.clientWidth - 1280 * s) / 2) + 'px';
+  st.style.top = ((a.clientHeight - 720 * s) / 2) + 'px';
+}
+function go(i){
+  i = Math.max(0, Math.min(N - 1, i));
+  cur = i;
+  for (var j = 0; j < N; j++) $('s' + (j + 1)).classList.toggle('on', j === i);
+  $('num').textContent = (i + 1) + ' / ' + N;
+  $('prev').disabled = i === 0;
+  $('next').disabled = i === N - 1;
+  var sc = i + 1;
+  if (!inited[sc]){ inited[sc] = true; if (init[sc]) init[sc](); }
+  else setTimeout(function(){ pingScreen(sc); }, 30);
+  renderNotes();
+  try { history.replaceState(null, '', '#' + sc); } catch (e) {}
+}
+function resetCurrent(){
+  var sc = cur + 1;
+  if (resets[sc]) resets[sc]();
+  Object.keys(demos).forEach(function(k){ var d = demos[k]; if (d.screen === sc && d.reset) d.reset(); });
+  if (sc === 9) resets[9]();
+}
+function handleKey(k){
+  var sc = cur + 1;
+  switch (k){
+    case 'ArrowRight': case 'PageDown': go(cur + 1); return true;
+    case 'ArrowLeft': case 'PageUp': go(cur - 1); return true;
+    case 'Home': go(0); return true;
+    case 'End': go(N - 1); return true;
+    case 'n': case 'N': toggleNotes(); return true;
+    case 'r': case 'R': resetCurrent(); return true;
+    case '1': case '2': case '3': case '4':
+      var v = +k;
+      if (tabs[sc] && v <= tabs[sc].count){ tabs[sc].show(v - 1); return true; }
+      if (sc === 9){ var c = $('qc' + v); if (c) c.classList.toggle('open'); return true; }
+      return false;
+  }
+  return false;
+}
+document.addEventListener('keydown', function(e){
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (handleKey(e.key)) e.preventDefault();
+});
+$('prev').onclick = function(){ go(cur - 1); this.blur(); };
+$('next').onclick = function(){ go(cur + 1); this.blur(); };
+window.addEventListener('resize', fit);
+if (window.ResizeObserver) new ResizeObserver(fit).observe($('area'));
+
+fit();
+var h0 = parseInt((location.hash || '').replace('#', ''), 10);
+go(h0 >= 1 && h0 <= N ? h0 - 1 : 0);
+})();
+</script>
+</body>
+</html>
